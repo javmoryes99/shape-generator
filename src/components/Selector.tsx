@@ -18,7 +18,7 @@ function Selector() {
     <div className="card w-full bg-base-200 card-md shadow-sm">
       <div className="card-body">
         <h2 className="card-title">Shape generator</h2>
-        <span> Number of sides </span>
+        <span>Number of sides</span>
         <input
           name="sides"
           className="input w-full"
@@ -28,7 +28,7 @@ function Selector() {
           value={selector.sides}
           onChange={onSelectorChange}
         />
-        <span> Diameter </span>
+        <span>Diameter</span>
         <input
           name="diameter"
           className="input w-full"
@@ -36,7 +36,7 @@ function Selector() {
           value={selector.diameter}
           onChange={onSelectorChange}
         />
-        <span> Shape </span>
+        <span>Shape</span>
         <select
           name="type"
           className="input w-full"
