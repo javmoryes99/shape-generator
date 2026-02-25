@@ -4,6 +4,7 @@ export interface SelectorState {
   sides: number;
   diameter: number;
   type: string;
+  mode: string;
 }
 
 export interface SelectorContextType {

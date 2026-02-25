@@ -46,6 +46,17 @@ function Selector() {
           <option value="circle">Circle</option>
           <option value="shape">Shape</option>
         </select>
+        <span>Shape</span>
+        <select
+          name="mode"
+          className="input w-full"
+          value={selector.mode}
+          onChange={onSelectorChange}
+        >
+          <option value="thin">Thin</option>
+          <option value="thick">Thick</option>
+          <option value="fill">Fill</option>
+        </select>
       </div>
     </div>
   );

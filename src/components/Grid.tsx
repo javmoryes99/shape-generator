@@ -155,6 +155,52 @@ function Grid() {
     [drawLine]
   );
 
+  const floodFill = useCallback(
+    (
+      ctx: CanvasRenderingContext2D,
+      gridData: GridData,
+      startX: number,
+      startY: number
+    ) => {
+      const height = gridData.length;
+      const width = gridData[0].length;
+  
+      if (gridData[startY][startX] !== null) return;
+  
+      const queue: Point[] = [];
+      gridData[startY][startX] = color ?? null;
+      queue.push({ x: startX, y: startY });
+  
+      const directions = [
+        { x: 0, y: -1 },
+        { x: 0, y: 1 },
+        { x: 1, y: 0 },
+        { x: -1, y: 0 },
+      ];
+  
+      while (queue.length > 0) {
+        const node = queue.shift()!;
+  
+        paintCell(ctx, gridData, node.x, node.y);
+  
+        for (const dir of directions) {
+          const nx = node.x + dir.x;
+          const ny = node.y + dir.y;
+  
+          if (
+            nx >= 0 && nx < width &&
+            ny >= 0 && ny < height &&
+            gridData[ny][nx] === null
+          ) {
+            gridData[ny][nx] = color ?? null;
+            queue.push({ x: nx, y: ny });
+          }
+        }
+      }
+    },
+    [paintCell, color]
+  );
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -192,7 +238,11 @@ function Grid() {
         selector.diameter
       );
     }
-  }, [selector.diameter, selector.sides, selector.type, drawCircle, drawShape]);
+
+    if (selector.mode === "fill") {
+      floodFill(ctx, gridData, cx, cy);
+    }
+  }, [selector, drawCircle, drawShape, floodFill]);
 
   return (
     <div className="card w-full bg-base-200 card-md shadow-sm mt-5">

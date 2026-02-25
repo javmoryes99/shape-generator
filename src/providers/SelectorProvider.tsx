@@ -7,6 +7,7 @@ const SelectorProvider = ({ children }: { children: React.ReactNode }) => {
     sides: 6,
     diameter: 17,
     type: "circle",
+    mode: "thin"
   });
 
   return (
