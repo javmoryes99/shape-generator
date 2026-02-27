@@ -1,13 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import useSelector from "../hooks/useSelector";
 import useColor from "../hooks/useColor";
-
-type GridData = (string | null)[][];
-
-interface Point {
-  x: number;
-  y: number;
-}
+import { drawCircle, drawShape, floodFill, type GridData } from "../utils/gridDrawing";
 
 const MARGIN = 2;
 const CELL_SIZE = 24;
@@ -61,146 +55,6 @@ function Grid() {
     [color]
   );
 
-  const drawCircle = useCallback(
-    (
-      ctx: CanvasRenderingContext2D,
-      gridData: GridData,
-      center: Point,
-      diameter: number
-    ) => {
-      const radius = Math.floor(diameter / 2);
-      let d = (5 - radius * 4) / 4;
-      let x = 0;
-      let y = radius;
-
-      while (x <= y) {
-        paintCell(ctx, gridData, center.x + x, center.y + y);
-        paintCell(ctx, gridData, center.x + x, center.y - y);
-        paintCell(ctx, gridData, center.x - x, center.y + y);
-        paintCell(ctx, gridData, center.x - x, center.y - y);
-        paintCell(ctx, gridData, center.x + y, center.y + x);
-        paintCell(ctx, gridData, center.x + y, center.y - x);
-        paintCell(ctx, gridData, center.x - y, center.y + x);
-        paintCell(ctx, gridData, center.x - y, center.y - x);
-
-        if (d < 0) {
-          d += 2 * x + 1;
-        } else {
-          d += 2 * (x - y) + 1;
-          y--;
-        }
-        x++;
-      }
-    },
-    [paintCell]
-  );
-
-  const drawLine = useCallback(
-    (
-      ctx: CanvasRenderingContext2D,
-      gridData: GridData,
-      v0: Point,
-      v1: Point
-    ) => {
-      const dx = Math.abs(v1.x - v0.x),
-        sx = v0.x < v1.x ? 1 : -1;
-      const dy = Math.abs(v1.y - v0.y),
-        sy = v0.y < v1.y ? 1 : -1;
-      let err = (dx > dy ? dx : -dy) / 2;
-
-      while (true) {
-        paintCell(ctx, gridData, v0.x, v0.y);
-        if (v0.x === v1.x && v0.y === v1.y) break;
-        const e2 = err;
-        if (e2 > -dx) {
-          err -= dy;
-          v0.x += sx;
-        }
-        if (e2 < dy) {
-          err += dx;
-          v0.y += sy;
-        }
-      }
-    },
-    [paintCell]
-  );
-
-  const drawShape = useCallback(
-    (
-      ctx: CanvasRenderingContext2D,
-      gridData: GridData,
-      center: Point,
-      sides: number,
-      angle0: number,
-      diameter: number
-    ) => {
-      if (sides === 2) return;
-
-      const radius = Math.floor(diameter / 2);
-      const vertices: Point[] = [];
-
-      for (let i = 0; i < sides; i++) {
-        const xi =
-          center.x + radius * Math.cos((2 * Math.PI * i) / sides + angle0);
-        const yi =
-          center.y + radius * Math.sin((2 * Math.PI * i) / sides + angle0);
-        vertices.push({ x: Math.round(xi), y: Math.round(yi) });
-      }
-
-      for (let i = 0; i < vertices.length; i++) {
-        const next = (i + 1) % vertices.length;
-        drawLine(ctx, gridData, { ...vertices[i] }, { ...vertices[next] });
-      }
-    },
-    [drawLine]
-  );
-
-  const floodFill = useCallback(
-    (
-      ctx: CanvasRenderingContext2D,
-      gridData: GridData,
-      startX: number,
-      startY: number
-    ) => {
-      const height = gridData.length;
-      const width = gridData[0].length;
-  
-      if (gridData[startY][startX] !== null) return;
-  
-      const queue: Point[] = [];
-      gridData[startY][startX] = color ?? null;
-      queue.push({ x: startX, y: startY });
-  
-      const directions = [
-        { x: 0, y: -1 },
-        { x: 0, y: 1 },
-        { x: 1, y: 0 },
-        { x: -1, y: 0 },
-      ];
-  
-      while (queue.length > 0) {
-        const node = queue.shift()!;
-  
-        paintCell(ctx, gridData, node.x, node.y);
-  
-        for (const dir of directions) {
-          const nx = node.x + dir.x;
-          const ny = node.y + dir.y;
-  
-          if (
-            nx >= 0 && nx < width &&
-            ny >= 0 && ny < height &&
-            gridData[ny][nx] === null
-          ) {
-            gridData[ny][nx] = color ?? null;
-            queue.push({ x: nx, y: ny });
-          }
-        }
-      }
-    },
-    [paintCell, color]
-  );
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -227,7 +81,7 @@ function Grid() {
     const cy = Math.floor(height / 2);
 
     if (selector.type === "circle") {
-      drawCircle(ctx, gridData, { x: cx, y: cy }, selector.diameter);
+      drawCircle(ctx, gridData, { x: cx, y: cy }, selector.diameter, paintCell);
     } else {
       drawShape(
         ctx,
@@ -235,14 +89,15 @@ function Grid() {
         { x: cx, y: cy },
         selector.sides,
         0,
-        selector.diameter
+        selector.diameter,
+        paintCell
       );
     }
 
     if (selector.mode === "fill") {
-      floodFill(ctx, gridData, cx, cy);
+      floodFill(ctx, gridData, cx, cy, color ?? "", paintCell);
     }
-  }, [selector, drawCircle, drawShape, floodFill]);
+  }, [selector, color, paintCell]);
 
   return (
     <div className="card w-full bg-base-200 card-md shadow-sm mt-5">
